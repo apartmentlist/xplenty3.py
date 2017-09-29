@@ -1,3 +1,4 @@
-Version 0.1.0, 2017-09-29
+Version 0.1.1, 2017-09-29
 -------------------------
+103ba80 Encode POST data
 38d238f Upgrade xplenty.py using 2to3
