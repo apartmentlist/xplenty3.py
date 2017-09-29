@@ -276,7 +276,7 @@ class XplentyClient(object):
         return json.loads(resp.read())
 
     def post(self, url, data_dict={}):
-        encoded_data = urllib.parse.urlencode(data_dict)
+        encoded_data = urllib.parse.urlencode(data_dict).encode('utf8')
         logger.debug("POST %s, data %s", url, encoded_data)
 
         request = urllib.request.Request(url, data=encoded_data, headers=HEADERS)
