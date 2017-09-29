@@ -2,9 +2,9 @@
 import base64
 import json
 import logging
-import urllib
-import urllib2
-from urlparse import urljoin
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
+from urllib.parse import urljoin
 
 from dateutil.parser import parse as parse_datetime
 
@@ -52,7 +52,7 @@ def to_python(obj,
             in_date = in_dict.get(in_key)
             try:
                 out_date = parse_datetime(in_date)
-            except Exception, e:
+            except Exception as e:
                 #raise e
                 out_date = None
 
@@ -79,7 +79,7 @@ def to_python(obj,
                 d[in_key] = dict(in_dict.get(in_key))
 
     if object_map:
-        for (k, v) in object_map.items():
+        for (k, v) in list(object_map.items()):
             if in_dict.get(k):
                 d[k] = v.new_from_dict(in_dict.get(k))
 
@@ -119,7 +119,7 @@ class BaseModel(object):
             setattr(self, attr, None)
 
     def _keys(self):
-        return self._strs + self._ints + self._dates + self._bools + self._map.keys()
+        return self._strs + self._ints + self._dates + self._bools + list(self._map.keys())
 
     @property
     def _id(self):
@@ -143,7 +143,7 @@ class BaseModel(object):
 
     def dict(self):
         d = dict()
-        for k in self.keys():
+        for k in list(self.keys()):
             d[k] = self.__dict__.get(k)
 
         return d
@@ -233,19 +233,19 @@ class Schedule(BaseModel):
         return "<Schedule '{0}'>".format(self.name)
 
 
-class RequestWithMethod(urllib2.Request):
+class RequestWithMethod(urllib.request.Request):
     """Workaround for using DELETE with urllib2"""
     def __init__(self, url, method, data=None, headers={},\
         origin_req_host=None, unverifiable=False):
         self._method = method
-        urllib2.Request.__init__(self, url, data, headers,\
+        urllib.request.Request.__init__(self, url, data, headers,\
                  origin_req_host, unverifiable)
 
     def get_method(self):
         if self._method:
             return self._method
         else:
-            return urllib2.Request.get_method(self)
+            return urllib.request.Request.get_method(self)
 
 
 class XplentyClient(object):
@@ -258,30 +258,33 @@ class XplentyClient(object):
     def __repr__(self):
         return '<Xplenty client at 0x%x>' % (id(self))
 
-    def get(self,url):
-        logger.debug("GET %s", url)
-        request = urllib2.Request(url,headers=HEADERS)
-        base64string = base64.encodestring('%s' % (self.api_key)).replace('\n', '')
+    def __authorize_request(self, request):
+        base64string = base64.urlsafe_b64encode(self.api_key.encode('utf8')).decode('ascii')
         request.add_header("Authorization", "Basic %s" % base64string)
+        return request
+
+    def get(self, url):
+        logger.debug("GET %s", url)
+        request = urllib.request.Request(url,headers=HEADERS)
+        request = self.__authorize_request(request)
 
         try:
-            resp = urllib2.urlopen(request)
-        except urllib2.HTTPError, error:
+            resp = urllib.request.urlopen(request)
+        except urllib.error.HTTPError as error:
             raise XplentyAPIException(error)
 
         return json.loads(resp.read())
 
     def post(self, url, data_dict={}):
-        encoded_data = urllib.urlencode(data_dict)
+        encoded_data = urllib.parse.urlencode(data_dict)
         logger.debug("POST %s, data %s", url, encoded_data)
 
-        request = urllib2.Request(url, data=encoded_data, headers=HEADERS)
-        base64string = base64.encodestring('%s' % (self.api_key)).replace('\n', '')
-        request.add_header("Authorization", "Basic %s" % base64string)
+        request = urllib.request.Request(url, data=encoded_data, headers=HEADERS)
+        request = self.__authorize_request(request)
 
         try:
-            resp = urllib2.urlopen(request)
-        except urllib2.HTTPError, error:
+            resp = urllib.request.urlopen(request)
+        except urllib.error.HTTPError as error:
             raise XplentyAPIException(error)
 
         return json.loads(resp.read())
@@ -289,12 +292,11 @@ class XplentyClient(object):
     def delete(self, url):
         logger.debug("DELETE %s", url)
         request = RequestWithMethod(url, 'DELETE', headers=HEADERS)
-        base64string = base64.encodestring('%s' % (self.api_key)).replace('\n', '')
-        request.add_header("Authorization", "Basic %s" % base64string)
+        request = self.__authorize_request(request)
 
         try:
-            resp = urllib2.urlopen(request)
-        except urllib2.HTTPError, error:
+            resp = urllib.request.urlopen(request)
+        except urllib.error.HTTPError as error:
             raise XplentyAPIException(error)
 
         return json.loads(resp.read())
@@ -373,11 +375,11 @@ class XplentyClient(object):
         # We use job_id instead of package_id since that's how it is accepted on Xplenty's side
         job_info["job[job_id]"]= package_id
 
-        for k, v in vars.iteritems():
+        for k, v in vars.items():
             new_key = "job[variables][%s]"%(k)
             job_info[new_key]= v
 
-        for k, v in dynamic_vars.iteritems():
+        for k, v in dynamic_vars.items():
             new_key = "job[dynamic_variables][%s]"%(k)
             job_info[new_key]= v
 
