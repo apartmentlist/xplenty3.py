@@ -11,11 +11,11 @@ requirements_filename = os.path.join(this_dir, 'requirements.txt')
 def get_project_path(*args):
     return os.path.abspath(os.path.join(this_dir, *args))
 
-PACKAGE_NAME = 'xplenty'
-PACKAGE_VERSION = '1.1.0'
+PACKAGE_NAME = 'xplenty3'
+PACKAGE_VERSION = '0.1.0'
 PACKAGE_AUTHOR = 'Xplenty'
 PACKAGE_AUTHOR_EMAIL = 'opensource@xplenty.com'
-PACKAGE_URL = 'https://github.com/xplenty/xplenty.py'
+PACKAGE_URL = 'https://github.com/apartmentlist/xplenty3.py'
 PACKAGES = find_packages(get_project_path())
 PACKAGE_LICENSE = 'MIT'
 PACKAGE_DESCRIPTION = 'Xplenty API Python SDK'
